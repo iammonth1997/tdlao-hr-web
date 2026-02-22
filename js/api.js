@@ -1,7 +1,7 @@
 /** TDLAO HR API - Frontend Connector */
 
 const WORKER_API     = "https://tdlao-api.iammonth1997.workers.dev/";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSAu53R-6U8kPfFk8oIfwDk2ofCy_maGjfcotT7P3UvB05ohujiblJYtentnsRPYWmNw/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGhWYfjV1vX3yl6OcROs17PZX8tZi7luapo4zV2K-iEj46u9prmehiR0WqK6LJMx_1gA/exec";
 
 async function fetchJSON(url) {
   try {
