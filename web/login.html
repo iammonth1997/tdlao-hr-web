@@ -255,15 +255,15 @@
 
   <script src="../js/api.js"></script>
   <script>
-    // Redirect if already logged in
+    // Keep login page stable: do not auto-redirect to index on page load.
+    // Only clear broken/expired sessions.
 const _token = localStorage.getItem("tdlao_token");
 const _emp   = localStorage.getItem("tdlao_emp");
 const _ts    = parseInt(localStorage.getItem("tdlao_ts") || "0", 10);
 const _TTL   = 30 * 24 * 60 * 60 * 1000;
-if (_token && _emp && _ts && (Date.now() - _ts < _TTL)) {
-  window.location.replace("/web/index.html");
-} else {
-  // Clear partial/expired session to prevent login <-> index redirect loop
+const _validSession = _token && _emp && _ts && (Date.now() - _ts < _TTL);
+
+if (!_validSession && (_token || _emp || _ts)) {
   localStorage.removeItem("tdlao_token");
   localStorage.removeItem("tdlao_emp");
   localStorage.removeItem("tdlao_ts");
