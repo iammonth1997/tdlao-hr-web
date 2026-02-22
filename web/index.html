@@ -4,44 +4,206 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TDLAO HR Portal</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;600;700;800&family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="../js/lang.js"></script>
-  <script src="../js/api.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red: #cc0000; --red2: #ff2222;
+      --dark: #0d1117; --card: #131a24; --border: #1e2a38;
+      --text: #ffffff; --muted: #8899aa;
+    }
+    body {
+      font-family: "Saira", "Noto Sans Lao", sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    body::before {
+      content: "";
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(204,0,0,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(204,0,0,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* HEADER */
+    .header {
+      background: #000;
+      border-bottom: 3px solid var(--red);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-logo {
+      width: 40px; height: 40px;
+      background: var(--red);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800;
+    }
+    .header h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+
+    .lang-btn {
+      background: var(--border);
+      border: none; padding: 5px 10px;
+      color: var(--muted); font-size: 11px; font-weight: 700;
+      border-radius: 20px; cursor: pointer; transition: 0.2s;
+      font-family: inherit;
+    }
+    .lang-btn:hover { background: var(--red); color: white; }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      color: var(--muted); font-size: 12px; font-weight: 600;
+      border-radius: 20px; cursor: pointer; transition: 0.2s;
+      font-family: inherit;
+    }
+    .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+    /* WELCOME */
+    .welcome {
+      padding: 20px 20px 0;
+    }
+    .welcome-card {
+      background: linear-gradient(135deg, #1a0000 0%, var(--card) 100%);
+      border: 1px solid rgba(204,0,0,0.2);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .emp-avatar {
+      width: 52px; height: 52px;
+      background: var(--red);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 800;
+      flex-shrink: 0;
+    }
+    .emp-info h2 { font-size: 16px; font-weight: 700; }
+    .emp-info p  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* MENU */
+    .menu-grid {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .menu-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 16px;
+      text-decoration: none;
+      color: var(--text);
+      transition: 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .menu-card::before {
+      content: "";
+      position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+      background: var(--red);
+      transform: scaleX(0);
+      transition: 0.2s;
+    }
+    .menu-card:hover { background: #1a2232; transform: translateY(-2px); border-color: rgba(204,0,0,0.3); }
+    .menu-card:hover::before { transform: scaleX(1); }
+
+    .menu-icon { font-size: 28px; }
+    .menu-num  { font-size: 11px; font-weight: 700; color: var(--red); letter-spacing: 1px; }
+    .menu-card h2 { font-size: 14px; font-weight: 700; line-height: 1.3; }
+
+    @media (max-width: 400px) {
+      .menu-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
+<body>
 
-<body class="bg-gray-900 text-white">
-
-  <!-- HEADER -->
-  <div class="bg-black text-center py-6 border-b-2 border-red-600">
-    <h1 class="text-2xl font-bold" data-lang="title">TDLAO HR Portal</h1>
-
-    <!-- Language Switch -->
-    <div class="mt-3 flex justify-center gap-4">
-      <button onclick="setLang('lo')" class="px-3 py-1 bg-red-600 rounded">LAO</button>
-      <button onclick="setLang('th')" class="px-3 py-1 bg-red-600 rounded">TH</button>
-      <button onclick="setLang('en')" class="px-3 py-1 bg-red-600 rounded">EN</button>
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">TD</div>
+      <h1>TDLAO HR</h1>
+    </div>
+    <div class="header-right">
+      <button class="lang-btn" onclick="setLang('lo')">LAO</button>
+      <button class="lang-btn" onclick="setLang('th')">TH</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+      <button class="logout-btn" onclick="doLogout()" data-lang="logout">ອອກ</button>
     </div>
   </div>
 
-  <!-- MENU GRID -->
-  <div class="p-6 grid grid-cols-1 gap-4">
-
-    <a href="select.html?page=daywork" class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-600">
-      <h2 class="text-xl font-semibold" data-lang="menu_day">1. ກວດວັນວຽກ</h2>
-    </a>
-
-    <a href="select.html?page=ot" class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-600">
-      <h2 class="text-xl font-semibold" data-lang="menu_ot">2. ກວດຊົ່ວໂມງ OT</h2>
-    </a>
-
-    <a href="select.html?page=salary" class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-600">
-      <h2 class="text-xl font-semibold" data-lang="menu_salary">3. ສະລິບເງິນເດືອນ</h2>
-    </a>
-
-    <a href="select.html?page=ot-slip" class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-600">
-      <h2 class="text-xl font-semibold" data-lang="menu_ot_slip">4. ສະລິບ OT + ຄ່າຈູງໃຈ</h2>
-    </a>
-
+  <div class="welcome">
+    <div class="welcome-card">
+      <div class="emp-avatar" id="empAvatar">?</div>
+      <div class="emp-info">
+        <h2 id="empId">...</h2>
+        <p id="empDate"></p>
+      </div>
+    </div>
   </div>
+
+  <div class="menu-grid">
+    <a href="select.html?page=daywork" class="menu-card">
+      <div class="menu-icon">📅</div>
+      <div class="menu-num">01</div>
+      <h2 data-lang="menu_day">ກວດວັນເຮັດວຽກ</h2>
+    </a>
+    <a href="select.html?page=ot" class="menu-card">
+      <div class="menu-icon">⏱</div>
+      <div class="menu-num">02</div>
+      <h2 data-lang="menu_ot">ກວດຊົ່ວໂມງ OT</h2>
+    </a>
+    <a href="select.html?page=salary-slip" class="menu-card">
+      <div class="menu-icon">💰</div>
+      <div class="menu-num">03</div>
+      <h2 data-lang="menu_salary">ສະລິບເງິນເດືອນ</h2>
+    </a>
+    <a href="select.html?page=ot-slip" class="menu-card">
+      <div class="menu-icon">📊</div>
+      <div class="menu-num">04</div>
+      <h2 data-lang="menu_ot_slip">ສະລິບ OT + ຄ່າຈູງໃຈ</h2>
+    </a>
+  </div>
+
+  <script>
+    // Auth check
+    const token = localStorage.getItem("tdlao_token");
+    const empId = localStorage.getItem("tdlao_emp");
+    if (!token || !empId) {
+      window.location.href = "/web/login.html";
+    }
+
+    // Show employee info
+    document.getElementById("empId").textContent = empId || "";
+    document.getElementById("empAvatar").textContent = empId ? empId.charAt(0).toUpperCase() : "?";
+
+    const now = new Date();
+    document.getElementById("empDate").textContent =
+      now.toLocaleDateString("lo-LA", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+
+    function doLogout() {
+      localStorage.removeItem("tdlao_token");
+      localStorage.removeItem("tdlao_emp");
+      localStorage.removeItem("tdlao_ts");
+      window.location.href = "/web/login.html";
+    }
+  </script>
 </body>
 </html>

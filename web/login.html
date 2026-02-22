@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TDLAO HR - Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;600;700;800&family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="../js/lang.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:    #cc0000;
+      --red2:   #ff2222;
+      --dark:   #0d1117;
+      --card:   #131a24;
+      --border: #1e2a38;
+      --text:   #ffffff;
+      --muted:  #8899aa;
+    }
+
+    body {
+      font-family: "Saira", "Noto Sans Lao", sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* Background grid effect */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(204,0,0,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(204,0,0,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .logo-wrap {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--red);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 auto 12px;
+      box-shadow: 0 0 30px rgba(204,0,0,0.4);
+    }
+
+    .logo-wrap h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--text);
+    }
+
+    .logo-wrap p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .lang-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .lang-btn {
+      background: var(--border);
+      border: none;
+      padding: 5px 14px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.2s;
+      font-family: inherit;
+    }
+
+    .lang-btn:hover, .lang-btn.active {
+      background: var(--red);
+      color: white;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 16px;
+      font-family: inherit;
+      transition: 0.2s;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(204,0,0,0.15);
+    }
+
+    .pin-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .pin-digit {
+      flex: 1;
+      padding: 14px 0;
+      text-align: center;
+      background: var(--dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 20px;
+      font-weight: 700;
+      font-family: inherit;
+      transition: 0.2s;
+      outline: none;
+    }
+
+    .pin-digit:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(204,0,0,0.15);
+    }
+
+    .error-msg {
+      background: rgba(204,0,0,0.1);
+      border: 1px solid rgba(204,0,0,0.3);
+      color: #ff6666;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none;
+      text-align: center;
+    }
+
+    .error-msg.show { display: block; }
+
+    .login-btn {
+      width: 100%;
+      padding: 15px;
+      background: var(--red);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-btn:hover { background: var(--red2); transform: translateY(-1px); }
+    .login-btn:active { transform: translateY(0); }
+    .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo-wrap">
+    <div class="logo-icon">TD</div>
+    <h1>TDLAO HR</h1>
+    <p>Employee Self-Service Portal</p>
+  </div>
+
+  <div class="card">
+
+    <div class="lang-row">
+      <button class="lang-btn" onclick="setLangActive('lo')">LAO</button>
+      <button class="lang-btn" onclick="setLangActive('th')">ไทย</button>
+      <button class="lang-btn" onclick="setLangActive('en')">EN</button>
+    </div>
+
+    <div class="field">
+      <label data-lang="emp_id">ລະຫັດພະນັກງານ</label>
+      <input type="text" id="empId" placeholder="e.g. L2210007" autocomplete="off" autocapitalize="characters" />
+    </div>
+
+    <div class="field">
+      <label data-lang="pin">PIN 6 ຕົວເລກ</label>
+      <div class="pin-row">
+        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+      </div>
+    </div>
+
+    <div class="error-msg" id="errorMsg" data-lang="error_auth">ລະຫັດພະນັກງານ ຫຼື PIN ບໍ່ຖືກຕ້ອງ</div>
+
+    <button class="login-btn" id="loginBtn" onclick="doLogin()" data-lang="login_btn">ເຂົ້າສູ່ລະບົບ</button>
+
+    <p class="hint">ຄັ້ງທຳອິດ: ໃຊ້ PIN = ທ້າຍເລກໂທລະສັບ 6 ຕົວ<br>
+    First time: PIN = last 6 digits of your phone</p>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    // Redirect if already logged in
+    if (localStorage.getItem("tdlao_token")) {
+      window.location.href = "/web/index.html";
+    }
+
+    // PIN auto-advance
+    const pinInputs = document.querySelectorAll(".pin-digit");
+    pinInputs.forEach((input, i) => {
+      input.addEventListener("input", () => {
+        if (input.value && i < pinInputs.length - 1) {
+          pinInputs[i + 1].focus();
+        }
+      });
+      input.addEventListener("keydown", e => {
+        if (e.key === "Backspace" && !input.value && i > 0) {
+          pinInputs[i - 1].focus();
+        }
+      });
+    });
+
+    // Enter key submit
+    document.getElementById("empId").addEventListener("keydown", e => {
+      if (e.key === "Enter") pinInputs[0].focus();
+    });
+    pinInputs[pinInputs.length - 1].addEventListener("keydown", e => {
+      if (e.key === "Enter") doLogin();
+    });
+
+    function getPin() {
+      return Array.from(pinInputs).map(i => i.value).join("");
+    }
+
+    function setLangActive(code) {
+      setLang(code);
+      document.querySelectorAll(".lang-btn").forEach((btn, i) => {
+        btn.classList.toggle("active", ["lo","th","en"][i] === code);
+      });
+    }
+
+    // Set active lang button on load
+    const currentLang = localStorage.getItem("lang") || "lo";
+    document.querySelectorAll(".lang-btn").forEach((btn, i) => {
+      btn.classList.toggle("active", ["lo","th","en"][i] === currentLang);
+    });
+
+    async function doLogin() {
+      const empId = document.getElementById("empId").value.trim().toUpperCase();
+      const pin   = getPin();
+      const btn   = document.getElementById("loginBtn");
+      const err   = document.getElementById("errorMsg");
+
+      err.classList.remove("show");
+
+      if (!empId || pin.length !== 6) {
+        err.classList.add("show");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = t("loading");
+
+      const res = await callAPI("login", { emp: empId, pin });
+
+      btn.disabled = false;
+      btn.textContent = t("login_btn");
+
+      if (res && res.token) {
+        localStorage.setItem("tdlao_token", res.token);
+        localStorage.setItem("tdlao_emp",   empId);
+        localStorage.setItem("tdlao_ts",    Date.now().toString());
+        window.location.href = "/web/index.html";
+      } else {
+        err.classList.add("show");
+        pinInputs.forEach(i => i.value = "");
+        pinInputs[0].focus();
+      }
+    }
+  </script>
+</body>
+</html>
