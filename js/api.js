@@ -17,7 +17,17 @@ async function fetchJSON(url) {
 function getAuthParams() {
   const token = localStorage.getItem("tdlao_token");
   const empId = localStorage.getItem("tdlao_emp");
-  if (!token || !empId) return null;
+  const ts = parseInt(localStorage.getItem("tdlao_ts") || "0", 10);
+  const ttl = 30 * 24 * 60 * 60 * 1000;
+
+  if (!token || !empId || !ts || (Date.now() - ts > ttl)) {
+    localStorage.removeItem("tdlao_token");
+    localStorage.removeItem("tdlao_emp");
+    localStorage.removeItem("tdlao_ts");
+    return null;
+  }
+
+  localStorage.setItem("tdlao_ts", Date.now().toString());
   return { emp: empId, token };
 }
 

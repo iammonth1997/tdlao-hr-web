@@ -257,12 +257,13 @@
   <script>
     // Redirect if already logged in
 const _token = localStorage.getItem("tdlao_token");
-const _ts    = parseInt(localStorage.getItem("tdlao_ts") || "0");
+const _emp   = localStorage.getItem("tdlao_emp");
+const _ts    = parseInt(localStorage.getItem("tdlao_ts") || "0", 10);
 const _TTL   = 30 * 24 * 60 * 60 * 1000;
-if (_token && _ts && (Date.now() - _ts < _TTL)) {
-  window.location.href = "/web/index.html";
+if (_token && _emp && _ts && (Date.now() - _ts < _TTL)) {
+  window.location.replace("/web/index.html");
 } else {
-  // clear token เก่าที่อาจ invalid
+  // Clear partial/expired session to prevent login <-> index redirect loop
   localStorage.removeItem("tdlao_token");
   localStorage.removeItem("tdlao_emp");
   localStorage.removeItem("tdlao_ts");
@@ -333,7 +334,7 @@ if (_token && _ts && (Date.now() - _ts < _TTL)) {
         localStorage.setItem("tdlao_token", res.token);
         localStorage.setItem("tdlao_emp",   empId);
         localStorage.setItem("tdlao_ts",    Date.now().toString());
-        window.location.href = "/web/index.html";
+        window.location.replace("/web/index.html");
       } else {
         err.classList.add("show");
         pinInputs.forEach(i => i.value = "");

@@ -103,7 +103,16 @@
 
   <script src="../js/api.js"></script>
   <script>
-    if (!localStorage.getItem("tdlao_token")) window.location.href = "/web/login.html";
+    const token = localStorage.getItem("tdlao_token");
+    const empId = localStorage.getItem("tdlao_emp");
+    const ts = parseInt(localStorage.getItem("tdlao_ts") || "0", 10);
+    const TTL = 30 * 24 * 60 * 60 * 1000;
+    if (!token || !empId || !ts || (Date.now() - ts > TTL)) {
+      localStorage.removeItem("tdlao_token");
+      localStorage.removeItem("tdlao_emp");
+      localStorage.removeItem("tdlao_ts");
+      window.location.replace("/web/login.html");
+    }
 
     const p = new URLSearchParams(location.search);
     const month = p.get("month"), year = p.get("year");
