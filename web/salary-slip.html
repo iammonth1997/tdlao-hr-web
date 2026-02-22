@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../js/api.js"></script>
+<script src="../js/lang.js"></script>
+<title>Salary Slip</title>
+</head>
+
+<body class="bg-gray-900 text-white p-6">
+
+<h1 class="text-xl font-bold mb-4" data-lang="menu_salary">Salary Slip</h1>
+
+<div id="slip" class="bg-gray-800 p-4 rounded-xl"></div>
+
+<button id="downloadPDF" class="mt-4 bg-red-600 w-full py-3 rounded">
+  Download PDF
+</button>
+
+<script>
+  const p = new URLSearchParams(location.search);
+  const month = p.get("month");
+  const year = p.get("year");
+
+  loadSlip();
+
+  async function loadSlip() {
+    document.getElementById("slip").innerHTML = "Loading...";
+
+    const data = await callAPI("getSalarySlip", { month, year });
+
+    document.getElementById("slip").innerHTML = `
+      <div class="text-lg font-bold">${data.name}</div>
+      <div>ID: ${data.empcode}</div>
+      <hr class="my-2 border-gray-500" />
+      <div>💰 Basic: ${data.basic}</div>
+      <div>🏗 Allowance: ${data.allowance}</div>
+      <div>🛠 OT: ${data.ot}</div>
+      <div>📉 Deduction: ${data.deduct}</div>
+      <hr class="my-2 border-gray-500" />
+      <div class="text-xl font-bold text-green-400">Net: ${data.net}</div>
+    `;
+  }
+
+  document.getElementById("downloadPDF").onclick = async () => {
+    const pdf = await callAPI("getSalarySlipPDF", { month, year });
+    window.open(pdf.url, "_blank");
+  };
+</script>
+
+</body>
+</html>

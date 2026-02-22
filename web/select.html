@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Month/Year</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../js/lang.js"></script>
+</head>
+
+<body class="bg-gray-900 text-white p-6">
+
+  <h1 class="text-xl font-bold mb-4" data-lang="choose_month">ເລືອກເດືອນ / ປີ</h1>
+
+  <label data-lang="month_label">ເດືອນ</label>
+  <select id="month" class="text-black w-full p-3 mt-2 mb-4 rounded">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+    <option value="11">11</option>
+    <option value="12">12</option>
+  </select>
+
+  <label data-lang="year_label">ປີ</label>
+  <select id="year" class="text-black w-full p-3 mt-2 mb-4 rounded">
+    <option>2025</option>
+    <option>2026</option>
+    <option>2027</option>
+  </select>
+
+  <button onclick="goNext()" class="w-full bg-red-600 py-3 rounded text-xl">
+    Next →
+  </button>
+
+  <script>
+    function goNext() {
+      const params = new URLSearchParams(window.location.search);
+      const page = params.get("page");
+      const month = document.getElementById("month").value;
+      const year = document.getElementById("year").value;
+
+      window.location.href = page + ".html?month=" + month + "&year=" + year;
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/lang.js"></script>
+  <title>OT</title>
+</head>
+
+<body class="bg-gray-900 text-white p-6">
+
+<h1 class="text-xl font-bold mb-4" data-lang="menu_ot">OT Hours</h1>
+
+<div id="result" class="p-4 bg-gray-800 rounded-xl"></div>
+
+<script>
+  const month = new URLSearchParams(window.location.search).get("month");
+  const year = new URLSearchParams(window.location.search).get("year");
+
+  loadOT();
+  async function loadOT() {
+    document.getElementById("result").innerHTML = "Loading...";
+
+    const data = await callAPI("getOT", { month, year });
+
+    document.getElementById("result").innerHTML = `
+      <div class="font-bold text-lg">${data.name}</div>
+      <div>OT 1.5: ${data.ot15} ຊົ່ວໂມງ</div>
+      <div>OT 2.0: ${data.ot20} ຊົ່ວໂມງ</div>
+      <div>OT 3.0: ${data.ot30} ຊົ່ວໂມງ</div>
+      <div class="mt-2">🔥 Incentive: ${data.incentive} Kip</div>
+    `;
+  }
+</script>
+
+</body>
+</html>

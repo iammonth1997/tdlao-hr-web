@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TDLAO HR Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../js/lang.js"></script>
+  <script src="../js/api.js"></script>
+</head>
+
+<body class="bg-gray-900 text-white">
+
+  <!-- HEADER -->
+  <div class="bg-black text-center py-6 border-b-2 border-red-600">
+    <h1 class="text-2xl font-bold" data-lang="title">TDLAO HR Portal</h1>
+
+    <!-- Language Switch -->
+    <div class="mt-3 flex justify-center gap-4">
+      <button onclick="setLang('lo')" class="px-3 py-1 bg-red-600 rounded">LAO</button>
+      <button onclick="setLang('th')" class="px-3 py-1 bg-red-600 rounded">TH</button>
+      <button onclick="setLang('en')" class="px-3 py-1 bg-red-600 rounded">EN</button>
+    </div>
+  </div>
+
+  <!-- MENU GRID -->
+  <div class="p-6 grid grid-cols-1 gap-4">
+
+    <a href="select.html?page=daywork" class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-600">
+      <h2 class="text-xl font-semibold" data-lang="menu_day">1. ກວດວັນວຽກ</h2>
+    </a>
+
+    <a href="select.html?page=ot" class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-600">
+      <h2 class="text-xl font-semibold" data-lang="menu_ot">2. ກວດຊົ່ວໂມງ OT</h2>
+    </a>
+
+    <a href="select.html?page=salary" class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-600">
+      <h2 class="text-xl font-semibold" data-lang="menu_salary">3. ສະລິບເງິນເດືອນ</h2>
+    </a>
+
+    <a href="select.html?page=ot-slip" class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-600">
+      <h2 class="text-xl font-semibold" data-lang="menu_ot_slip">4. ສະລິບ OT + ຄ່າຈູງໃຈ</h2>
+    </a>
+
+  </div>
+</body>
+</html>

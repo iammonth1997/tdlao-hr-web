@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../js/api.js"></script>
+<script src="../js/lang.js"></script>
+<title>OT Slip</title>
+</head>
+
+<body class="bg-gray-900 text-white p-6">
+
+<h1 class="text-xl font-bold mb-4" data-lang="menu_ot_slip">OT Slip</h1>
+
+<div id="slip" class="bg-gray-800 p-4 rounded-xl"></div>
+
+<button id="downloadPDF" class="mt-4 bg-red-600 w-full py-3 rounded">
+  Download PDF
+</button>
+
+<script>
+  const p = new URLSearchParams(location.search);
+  const month = p.get("month");
+  const year = p.get("year");
+
+  loadSlip();
+
+  async function loadSlip() {
+    const data = await callAPI("getOTSlip", { month, year });
+
+    document.getElementById("slip").innerHTML = `
+      <div class="text-lg font-bold">${data.name}</div>
+      <div>ID: ${data.empcode}</div>
+      <hr class="my-2 border-gray-500" />
+      <div>OT Hours: ${data.ot_hours}</div>
+      <div>Incentive: ${data.incentive}</div>
+      <div class="text-xl font-bold text-green-400">Total: ${data.total}</div>
+    `;
+  }
+
+  document.getElementById("downloadPDF").onclick = async () => {
+    const pdf = await callAPI("getOTSlipPDF", { month, year });
+    window.open(pdf.url, "_blank");
+  };
+</script>
+
+</body>
+</html>

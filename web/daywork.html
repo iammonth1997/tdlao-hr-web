@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Day Work</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/lang.js"></script>
+</head>
+
+<body class="bg-gray-900 text-white p-6">
+
+<h1 class="text-xl font-bold mb-4" data-lang="menu_day">ກວດມື້ເຮັດວຽກ</h1>
+
+<div id="result" class="mt-4 p-4 bg-gray-800 rounded-xl"></div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const month = params.get("month");
+  const year = params.get("year");
+
+  loadData();
+
+  async function loadData() {
+    document.getElementById("result").innerHTML = "Loading...";
+
+    const data = await callAPI("getDayWork", { month, year });
+
+    if (!data || data.error) {
+      document.getElementById("result").innerHTML = "Not Found";
+      return;
+    }
+
+    document.getElementById("result").innerHTML = `
+      <div class="text-lg mb-2 font-bold">${data.name}</div>
+      <div>📅 ວັນເຮັດວຽກ: ${data.days} ວັນ</div>
+      <div>⏱ ມາສາຍ: ${data.late} ຄັ້ງ</div>
+      <div>📌 ຂາດວຽກ: ${data.absent} ວັນ</div>
+    `;
+  }
+</script>
+
+</body>
+</html>
