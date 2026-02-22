@@ -50,7 +50,7 @@ async function callAPI(action, params = {}) {
   if (action !== "login") {
     const auth = getAuthParams();
     if (!auth) {
-      window.location.href = "/web/login.html";
+     
       return { error: "Not authenticated" };
     }
     params = { ...auth, ...params };
