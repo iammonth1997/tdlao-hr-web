@@ -256,9 +256,17 @@
   <script src="../js/api.js"></script>
   <script>
     // Redirect if already logged in
-    if (localStorage.getItem("tdlao_token")) {
-      window.location.href = "/web/index.html";
-    }
+const _token = localStorage.getItem("tdlao_token");
+const _ts    = parseInt(localStorage.getItem("tdlao_ts") || "0");
+const _TTL   = 30 * 24 * 60 * 60 * 1000;
+if (_token && _ts && (Date.now() - _ts < _TTL)) {
+  window.location.href = "/web/index.html";
+} else {
+  // clear token เก่าที่อาจ invalid
+  localStorage.removeItem("tdlao_token");
+  localStorage.removeItem("tdlao_emp");
+  localStorage.removeItem("tdlao_ts");
+}
 
     // PIN auto-advance
     const pinInputs = document.querySelectorAll(".pin-digit");

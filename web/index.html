@@ -184,12 +184,16 @@
 
   <script>
     // Auth check
-    const token = localStorage.getItem("tdlao_token");
-    const empId = localStorage.getItem("tdlao_emp");
-    if (!token || !empId) {
-      window.location.href = "/web/login.html";
-    }
-
+const token = localStorage.getItem("tdlao_token");
+const empId = localStorage.getItem("tdlao_emp");
+const ts    = parseInt(localStorage.getItem("tdlao_ts") || "0");
+const TTL   = 30 * 24 * 60 * 60 * 1000;
+if (!token || !empId || (Date.now() - ts > TTL)) {
+  localStorage.removeItem("tdlao_token");
+  localStorage.removeItem("tdlao_emp");
+  localStorage.removeItem("tdlao_ts");
+  window.location.href = "/web/login.html";
+}
     // Show employee info
     document.getElementById("empId").textContent = empId || "";
     document.getElementById("empAvatar").textContent = empId ? empId.charAt(0).toUpperCase() : "?";
