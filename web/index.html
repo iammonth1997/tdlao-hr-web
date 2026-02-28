@@ -6,6 +6,7 @@
   <title>TDLAO HR Portal</title>
   <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;600;700;800&family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="../js/lang.js"></script>
+  <script src="../js/auth.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -183,17 +184,9 @@
   </div>
 
   <script>
-    // Auth check
-const token = localStorage.getItem("tdlao_token");
-const empId = localStorage.getItem("tdlao_emp");
-const ts    = parseInt(localStorage.getItem("tdlao_ts") || "0", 10);
-const TTL   = 30 * 24 * 60 * 60 * 1000;
-if (!token || !empId || !ts || (Date.now() - ts > TTL)) {
-  localStorage.removeItem("tdlao_token");
-  localStorage.removeItem("tdlao_emp");
-  localStorage.removeItem("tdlao_ts");
-  window.location.replace("/web/login.html");
-}
+    const auth = requireAuth();
+    const empId = auth ? auth.empId : "";
+
     // Show employee info
     document.getElementById("empId").textContent = empId || "";
     document.getElementById("empAvatar").textContent = empId ? empId.charAt(0).toUpperCase() : "?";
@@ -202,12 +195,7 @@ if (!token || !empId || !ts || (Date.now() - ts > TTL)) {
     document.getElementById("empDate").textContent =
       now.toLocaleDateString("lo-LA", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
 
-    function doLogout() {
-      localStorage.removeItem("tdlao_token");
-      localStorage.removeItem("tdlao_emp");
-      localStorage.removeItem("tdlao_ts");
-      window.location.replace("/web/login.html");
-    }
+    function doLogout() { logout(); }
   </script>
 </body>
 </html>

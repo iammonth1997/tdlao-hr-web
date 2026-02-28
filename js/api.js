@@ -6,10 +6,11 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGhWYfjV1vX3yl
 const SUPABASE_URL = "https://hokthzztcijvgnvcgkms.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_SnfPbihz94Zt2aOYDA91hw_1cCGTXDF";
 const DEVICE_KEY = "tdlao_device_id";
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 
-async function fetchJSON(url) {
+async function fetchJSON(url, init = {}) {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, init);
     if (!res.ok) return { error: `HTTP ${res.status}` };
     return await res.json();
   } catch (err) {
@@ -35,23 +36,30 @@ function getOrCreateDeviceId() {
 function getAuthParams() {
   const token = localStorage.getItem("tdlao_token");
   const empId = localStorage.getItem("tdlao_emp");
+  const exp = parseInt(localStorage.getItem("tdlao_exp") || "0", 10);
   const ts = parseInt(localStorage.getItem("tdlao_ts") || "0", 10);
-  const ttl = 30 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const validByExp = exp > 0 ? now < exp : (ts > 0 && now - ts < SESSION_TTL_MS);
 
-  if (!token || !empId || !ts || (Date.now() - ts > ttl)) {
+  if (!token || !empId || !validByExp) {
     localStorage.removeItem("tdlao_token");
     localStorage.removeItem("tdlao_emp");
+    localStorage.removeItem("tdlao_exp");
     localStorage.removeItem("tdlao_ts");
     return null;
   }
 
-  localStorage.setItem("tdlao_ts", Date.now().toString());
+  localStorage.setItem("tdlao_ts", now.toString());
   return { emp: empId, token, device_id: getOrCreateDeviceId() };
 }
 
-async function apiFetchWorker(endpoint, params = {}) {
+async function apiFetchWorker(endpoint, params = {}, authToken = "") {
   const query = new URLSearchParams(params).toString();
-  return await fetchJSON(`${WORKER_API}${endpoint}?${query}`);
+  const headers = authToken ? { Authorization: `Bearer ${authToken}` } : undefined;
+  return await fetchJSON(
+    `${WORKER_API}${endpoint}?${query}`,
+    headers ? { headers } : {}
+  );
 }
 
 async function apiPostAuth(action, payload = {}) {
@@ -68,9 +76,13 @@ async function apiPostAuth(action, payload = {}) {
   }
 }
 
-async function apiFetchAppsScript(action, params = {}) {
+async function apiFetchAppsScript(action, params = {}, authToken = "") {
   const query = new URLSearchParams({ action, endpoint: action, type: action, ...params }).toString();
-  return await fetchJSON(`${APPS_SCRIPT_URL}?${query}`);
+  const headers = authToken ? { Authorization: `Bearer ${authToken}` } : undefined;
+  return await fetchJSON(
+    `${APPS_SCRIPT_URL}?${query}`,
+    headers ? { headers } : {}
+  );
 }
 
 function normalizePayMonth(month, year) {
@@ -141,10 +153,11 @@ async function fetchEmployeeFromSupabase(empId) {
   });
 
   try {
+    const jwtToken = localStorage.getItem("tdlao_token") || SUPABASE_ANON_KEY;
     const res = await fetch(`${SUPABASE_URL}/rest/v1/employees?${query.toString()}`, {
       headers: {
         apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+        Authorization: `Bearer ${jwtToken}`
       }
     });
 
@@ -214,10 +227,11 @@ async function fetchSalaryFromSupabase(params = {}) {
   }
 
   try {
+    const jwtToken = localStorage.getItem("tdlao_token") || SUPABASE_ANON_KEY;
     const res = await fetch(`${SUPABASE_URL}/rest/v1/monthly_payroll?${query.toString()}`, {
       headers: {
         apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+        Authorization: `Bearer ${jwtToken}`
       }
     });
 
@@ -253,11 +267,13 @@ const ENDPOINT_MAP = {
 };
 
 async function callAPI(action, params = {}) {
-  // Inject auth automatically (except for login itself)
-  if (action !== "login") {
+  const isAuthAction = action === "login" || action === "check" || action === "register";
+
+  // Inject auth automatically (except for pre-auth actions)
+  if (!isAuthAction) {
     const auth = getAuthParams();
     if (!auth) {
-     
+
       return { error: "Not authenticated" };
     }
     params = { ...auth, ...params };
@@ -266,6 +282,12 @@ async function callAPI(action, params = {}) {
   const cleanParams = Object.fromEntries(
     Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "")
   );
+  let authToken = "";
+
+  if (!isAuthAction) {
+    authToken = String(cleanParams.token || "");
+    delete cleanParams.token;
+  }
 
   if (action === "login" && !cleanParams.device_id) {
     cleanParams.device_id = getOrCreateDeviceId();
@@ -277,25 +299,25 @@ async function callAPI(action, params = {}) {
 
   const endpoint = ENDPOINT_MAP[action] || action;
 
-  if (action === "login") {
-    return await apiPostAuth(endpoint, cleanParams);
+  if (action === "login" || action === "check" || action === "register") {
+    return await apiPostAuth(action, cleanParams);
   }
 
   // Try Worker first, fallback to Apps Script
-  const workerData = await apiFetchWorker(endpoint, cleanParams);
+  const shouldEnrich = action !== "login" && !String(action).includes("pdf");
+
+  const workerData = await apiFetchWorker(endpoint, cleanParams, authToken);
   if (workerData && !workerData.error) {
-    if (action !== "login" && !String(action).includes("pdf")) {
-      return await enrichWithEmployeeProfile(workerData, cleanParams.emp, true);
-    }
-    return workerData;
+    return shouldEnrich
+      ? await enrichWithEmployeeProfile(workerData, cleanParams.emp, true)
+      : workerData;
   }
 
-  const scriptData = await apiFetchAppsScript(endpoint, cleanParams);
+  const scriptData = await apiFetchAppsScript(endpoint, cleanParams, authToken);
   if (scriptData && !scriptData.error) {
-    if (action !== "login" && !String(action).includes("pdf")) {
-      return await enrichWithEmployeeProfile(scriptData, cleanParams.emp, true);
-    }
-    return scriptData;
+    return shouldEnrich
+      ? await enrichWithEmployeeProfile(scriptData, cleanParams.emp, true)
+      : scriptData;
   }
 
   return { error: scriptData?.error || workerData?.error || "API request failed" };

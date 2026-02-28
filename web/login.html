@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;600;700;800&family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="../js/lang.js"></script>
+  <script src="../js/auth.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -203,12 +204,49 @@
     .login-btn:active { transform: translateY(0); }
     .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-    .hint {
-      text-align: center;
-      font-size: 12px;
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .back-btn {
+      background: none;
+      border: 1px solid var(--border);
       color: var(--muted);
-      margin-top: 20px;
-      line-height: 1.6;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+
+    .back-btn:hover { border-color: var(--red); color: var(--text); }
+
+    .emp-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    input[type="date"] {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 16px;
+      font-family: inherit;
+      transition: 0.2s;
+      outline: none;
+    }
+
+    input[type="date"]:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(204,0,0,0.15);
     }
   </style>
 </head>
@@ -228,117 +266,257 @@
       <button class="lang-btn" onclick="setLangActive('en')">EN</button>
     </div>
 
-    <div class="field">
-      <label data-lang="emp_id">ລະຫັດພະນັກງານ</label>
-      <input type="text" id="empId" placeholder="e.g. L2210007" autocomplete="off" autocapitalize="characters" />
-    </div>
-
-    <div class="field">
-      <label data-lang="pin">PIN 6 ຕົວເລກ</label>
-      <div class="pin-row">
-        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
-        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
-        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
-        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
-        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
-        <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+    <!-- Step 1: Employee ID -->
+    <div id="stepEmp">
+      <div class="field">
+        <label data-lang="emp_id">ລະຫັດພະນັກງານ</label>
+        <input type="text" id="empId" placeholder="e.g. L2506110" autocomplete="off" autocapitalize="characters" />
       </div>
+      <div class="error-msg" id="errEmp"></div>
+      <button class="login-btn" id="checkBtn" onclick="doCheck()">ຕໍ່ໄປ / ถัดไป</button>
     </div>
 
-    <div class="error-msg" id="errorMsg" data-lang="error_auth">ລະຫັດພະນັກງານ ຫຼື PIN ບໍ່ຖືກຕ້ອງ</div>
+    <!-- Step 2a: Login (already registered) -->
+    <div id="stepLogin" style="display:none">
+      <div class="step-header">
+        <button class="back-btn" onclick="goBack()">← ກັບ</button>
+        <span id="empDisplay" class="emp-label"></span>
+      </div>
+      <div class="field">
+        <label data-lang="pin">PIN 6 ຕົວເລກ</label>
+        <div class="pin-row" id="pinRowLogin">
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+        </div>
+      </div>
+      <div class="error-msg" id="errLogin"></div>
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">ເຂົ້າສູ່ລະບົບ</button>
+    </div>
 
-    <button class="login-btn" id="loginBtn" onclick="doLogin()" data-lang="login_btn">ເຂົ້າສູ່ລະບົບ</button>
+    <!-- Step 2b: Register (first time) -->
+    <div id="stepRegister" style="display:none">
+      <div class="step-header">
+        <button class="back-btn" onclick="goBack()">← ກັບ</button>
+        <span class="emp-label">ລົງທະບຽນຄັ້ງທຳອິດ</span>
+      </div>
+      <div class="field">
+        <label>ວັນເດືອນປີເກີດ / วันเกิด (DOB)</label>
+        <input type="date" id="dobInput" />
+      </div>
+      <div class="field">
+        <label>ຕັ້ງ PIN 6 ຕົວເລກ</label>
+        <div class="pin-row" id="pinRowNew">
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+        </div>
+      </div>
+      <div class="field">
+        <label>ຢືນຢັນ PIN</label>
+        <div class="pin-row" id="pinRowConfirm">
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+          <input class="pin-digit" type="password" maxlength="1" inputmode="numeric" />
+        </div>
+      </div>
+      <div class="error-msg" id="errReg"></div>
+      <button class="login-btn" id="regBtn" onclick="doRegister()">ລົງທະບຽນ &amp; ເຂົ້າລະບົບ</button>
+    </div>
 
-    <p class="hint">ຄັ້ງທຳອິດ: ໃຊ້ PIN = ທ້າຍເລກໂທລະສັບ 6 ຕົວ<br>
-    First time: PIN = last 6 digits of your phone</p>
   </div>
 
   <script src="../js/api.js"></script>
   <script>
-    // Keep login page stable: do not auto-redirect to index on page load.
-    // Only clear broken/expired sessions.
-const _token = localStorage.getItem("tdlao_token");
-const _emp   = localStorage.getItem("tdlao_emp");
-const _ts    = parseInt(localStorage.getItem("tdlao_ts") || "0", 10);
-const _TTL   = 30 * 24 * 60 * 60 * 1000;
-const _validSession = _token && _emp && _ts && (Date.now() - _ts < _TTL);
+    getAuth();
 
-if (!_validSession && (_token || _emp || _ts)) {
-  localStorage.removeItem("tdlao_token");
-  localStorage.removeItem("tdlao_emp");
-  localStorage.removeItem("tdlao_ts");
-}
+    let currentEmpId = "";
 
-    // PIN auto-advance
-    const pinInputs = document.querySelectorAll(".pin-digit");
-    pinInputs.forEach((input, i) => {
-      input.addEventListener("input", () => {
-        if (input.value && i < pinInputs.length - 1) {
-          pinInputs[i + 1].focus();
-        }
-      });
-      input.addEventListener("keydown", e => {
-        if (e.key === "Backspace" && !input.value && i > 0) {
-          pinInputs[i - 1].focus();
-        }
-      });
-    });
-
-    // Enter key submit
-    document.getElementById("empId").addEventListener("keydown", e => {
-      if (e.key === "Enter") pinInputs[0].focus();
-    });
-    pinInputs[pinInputs.length - 1].addEventListener("keydown", e => {
-      if (e.key === "Enter") doLogin();
-    });
-
-    function getPin() {
-      return Array.from(pinInputs).map(i => i.value).join("");
-    }
-
+    // --- Lang ---
     function setLangActive(code) {
       setLang(code);
       document.querySelectorAll(".lang-btn").forEach((btn, i) => {
         btn.classList.toggle("active", ["lo","th","en"][i] === code);
       });
     }
-
-    // Set active lang button on load
     const currentLang = localStorage.getItem("lang") || "lo";
     document.querySelectorAll(".lang-btn").forEach((btn, i) => {
       btn.classList.toggle("active", ["lo","th","en"][i] === currentLang);
     });
 
-    async function doLogin() {
+    // --- PIN helpers ---
+    function setupPinRow(rowId, onComplete) {
+      const inputs = document.querySelectorAll(`#${rowId} .pin-digit`);
+      inputs.forEach((input, i) => {
+        input.addEventListener("input", () => {
+          input.value = input.value.replace(/\D/g, "");
+          if (input.value && i < inputs.length - 1) inputs[i + 1].focus();
+          if (input.value && i === inputs.length - 1 && onComplete) onComplete();
+        });
+        input.addEventListener("keydown", e => {
+          if (e.key === "Backspace" && !input.value && i > 0) inputs[i - 1].focus();
+        });
+      });
+      return inputs;
+    }
+
+    function getPinFromRow(rowId) {
+      return Array.from(document.querySelectorAll(`#${rowId} .pin-digit`)).map(i => i.value).join("");
+    }
+
+    function clearPinRow(rowId) {
+      document.querySelectorAll(`#${rowId} .pin-digit`).forEach(i => i.value = "");
+    }
+
+    function focusPinRow(rowId) {
+      document.querySelector(`#${rowId} .pin-digit`).focus();
+    }
+
+    setupPinRow("pinRowLogin", doLogin);
+    setupPinRow("pinRowNew");
+    setupPinRow("pinRowConfirm", doRegister);
+
+    document.getElementById("empId").addEventListener("keydown", e => {
+      if (e.key === "Enter") doCheck();
+    });
+
+    // --- Navigation ---
+    function showStep(step) {
+      ["stepEmp", "stepLogin", "stepRegister"].forEach(id => {
+        document.getElementById(id).style.display = id === step ? "block" : "none";
+      });
+    }
+
+    function goBack() {
+      currentEmpId = "";
+      showStep("stepEmp");
+      document.getElementById("empId").focus();
+    }
+
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.add("show");
+    }
+
+    function clearError(id) {
+      const el = document.getElementById(id);
+      el.textContent = "";
+      el.classList.remove("show");
+    }
+
+    // --- Step 1: Check emp_id ---
+    async function doCheck() {
       const empId = document.getElementById("empId").value.trim().toUpperCase();
-      const pin   = getPin();
-      const btn   = document.getElementById("loginBtn");
-      const err   = document.getElementById("errorMsg");
+      clearError("errEmp");
 
-      err.classList.remove("show");
+      if (!empId) { showError("errEmp", "ກະລຸນາໃສ່ລະຫັດພະນັກງານ"); return; }
 
-      if (!empId || pin.length !== 6) {
-        err.classList.add("show");
+      const btn = document.getElementById("checkBtn");
+      btn.disabled = true;
+      btn.textContent = "...";
+
+      const res = await callAPI("check", { emp: empId });
+
+      btn.disabled = false;
+      btn.textContent = "ຕໍ່ໄປ / ถัดไป";
+
+      if (!res || !res.exists) {
+        showError("errEmp", "ບໍ່ພົບລະຫັດພະນັກງານ / ไม่พบรหัสพนักงาน");
+        return;
+      }
+      if (!res.active) {
+        showError("errEmp", "ບັນຊີຖືກລະງັບ (ລາອອກ) / บัญชีถูกระงับ (ลาออก)");
         return;
       }
 
+      currentEmpId = empId;
+      document.getElementById("empDisplay").textContent = empId;
+
+      if (res.registered) {
+        showStep("stepLogin");
+        focusPinRow("pinRowLogin");
+      } else {
+        showStep("stepRegister");
+        document.getElementById("dobInput").focus();
+      }
+    }
+
+    // --- Step 2a: Login ---
+    async function doLogin() {
+      const pin = getPinFromRow("pinRowLogin");
+      clearError("errLogin");
+
+      if (pin.length !== 6) { showError("errLogin", "ກະລຸນາໃສ່ PIN 6 ຕົວ"); return; }
+
+      const btn = document.getElementById("loginBtn");
       btn.disabled = true;
       btn.textContent = t("loading");
 
-      const res = await callAPI("login", { emp: empId, pin });
+      const res = await callAPI("login", { emp: currentEmpId, pin });
 
       btn.disabled = false;
       btn.textContent = t("login_btn");
 
       if (res && res.token) {
-        localStorage.setItem("tdlao_token", res.token);
-        localStorage.setItem("tdlao_emp",   empId);
-        localStorage.setItem("tdlao_ts",    Date.now().toString());
+        saveAuth(currentEmpId, res.token, Number(res.expires_in) || 28800);
         window.location.replace("/web/index.html");
       } else {
-        err.classList.add("show");
-        pinInputs.forEach(i => i.value = "");
-        pinInputs[0].focus();
+        showError("errLogin", res && res.error === "Account suspended"
+          ? "ບັນຊີຖືກລະງັບ (ລາອອກ)"
+          : "PIN ບໍ່ຖືກຕ້ອງ / PIN ไม่ถูกต้อง");
+        clearPinRow("pinRowLogin");
+        focusPinRow("pinRowLogin");
+      }
+    }
+
+    // --- Step 2b: Register (first time) ---
+    async function doRegister() {
+      const dob = document.getElementById("dobInput").value;
+      const pin = getPinFromRow("pinRowNew");
+      const pinConfirm = getPinFromRow("pinRowConfirm");
+      clearError("errReg");
+
+      if (!dob) { showError("errReg", "ກະລຸນາໃສ່ວັນເກີດ / กรุณาใส่วันเกิด"); return; }
+      if (pin.length !== 6) { showError("errReg", "ກະລຸນາໃສ່ PIN 6 ຕົວ"); return; }
+      if (pin !== pinConfirm) {
+        showError("errReg", "PIN ບໍ່ຕົງກັນ / PIN ไม่ตรงกัน");
+        clearPinRow("pinRowConfirm");
+        focusPinRow("pinRowConfirm");
+        return;
+      }
+
+      const btn = document.getElementById("regBtn");
+      btn.disabled = true;
+      btn.textContent = "...";
+
+      const deviceId = localStorage.getItem("tdlao_device_id") || crypto.randomUUID();
+      localStorage.setItem("tdlao_device_id", deviceId);
+
+      const res = await callAPI("register", { emp: currentEmpId, pin, dob, device_id: deviceId });
+
+      btn.disabled = false;
+      btn.textContent = "ລົງທະບຽນ & ເຂົ້າລະບົບ";
+
+      if (res && res.token) {
+        saveAuth(currentEmpId, res.token, Number(res.expires_in) || 28800);
+        window.location.replace("/web/index.html");
+      } else {
+        const code = res && res.code;
+        let msg = "ເກີດຂໍ້ຜິດພາດ / เกิดข้อผิดพลาด";
+        if (code === "DOB_MISMATCH") msg = "ວັນເກີດບໍ່ຖືກຕ້ອງ / วันเกิดไม่ถูกต้อง";
+        if (code === "RESIGNED") msg = "ບັນຊີຖືກລະງັບ (ລາອອກ) / บัญชีถูกระงับ";
+        if (code === "ALREADY_REGISTERED") msg = "ລົງທະບຽນແລ້ວ ກະລຸນາ Login / ลงทะเบียนแล้ว กรุณา Login";
+        showError("errReg", msg);
       }
     }
   </script>

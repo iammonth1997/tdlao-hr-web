@@ -6,6 +6,7 @@
   <title>OT Slip</title>
   <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;600;700;800&family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="../js/lang.js"></script>
+  <script src="../js/auth.js"></script>
   <style>
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
     :root { --red:#cc0000; --dark:#0d1117; --card:#131a24; --border:#1e2a38; --text:#ffffff; --muted:#8899aa; --orange:#ff6600; }
@@ -103,16 +104,7 @@
 
   <script src="../js/api.js"></script>
   <script>
-    const token = localStorage.getItem("tdlao_token");
-    const empId = localStorage.getItem("tdlao_emp");
-    const ts = parseInt(localStorage.getItem("tdlao_ts") || "0", 10);
-    const TTL = 30 * 24 * 60 * 60 * 1000;
-    if (!token || !empId || !ts || (Date.now() - ts > TTL)) {
-      localStorage.removeItem("tdlao_token");
-      localStorage.removeItem("tdlao_emp");
-      localStorage.removeItem("tdlao_ts");
-      window.location.replace("/web/login.html");
-    }
+    requireAuth();
 
     const p = new URLSearchParams(location.search);
     const month = p.get("month"), year = p.get("year");

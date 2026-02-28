@@ -6,6 +6,7 @@
   <title>Select Month</title>
   <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;600;700;800&family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="../js/lang.js"></script>
+  <script src="../js/auth.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -98,53 +99,55 @@
 
     <div class="field">
       <label data-lang="year_label">ປີ</label>
-      <select id="year">
-        <option value="2024">2024</option>
-        <option value="2025">2025</option>
-        <option value="2026">2026</option>
-        <option value="2027">2027</option>
-      </select>
+      <select id="year"></select>
     </div>
 
     <button class="next-btn" onclick="goNext()" data-lang="next">ຕໍ່ໄປ →</button>
   </div>
 
   <script>
-    // Auth check
-    const token = localStorage.getItem("tdlao_token");
-    const empId = localStorage.getItem("tdlao_emp");
-    const ts = parseInt(localStorage.getItem("tdlao_ts") || "0", 10);
-    const TTL = 30 * 24 * 60 * 60 * 1000;
-    if (!token || !empId || !ts || (Date.now() - ts > TTL)) {
-      localStorage.removeItem("tdlao_token");
-      localStorage.removeItem("tdlao_emp");
-      localStorage.removeItem("tdlao_ts");
-      window.location.replace("/web/login.html");
-    }
+    requireAuth();
 
     // Set default to current month/year
     const now = new Date();
-    document.getElementById("month").value = now.getMonth() + 1;
-    document.getElementById("year").value  = now.getFullYear();
+    const monthEl = document.getElementById("month");
+    const yearEl = document.getElementById("year");
+    const currentYear = now.getFullYear();
 
-    // Set page title from query
+    for (let y = currentYear - 5; y <= currentYear + 2; y += 1) {
+      const opt = document.createElement("option");
+      opt.value = String(y);
+      opt.textContent = String(y);
+      yearEl.appendChild(opt);
+    }
+
+    monthEl.value = String(now.getMonth() + 1);
+    yearEl.value = String(currentYear);
+
+    // Set page title from query — redirect to index if page param is invalid
     const params  = new URLSearchParams(window.location.search);
     const page    = params.get("page") || "";
     const titleMap = {
-      daywork:     "menu_day",
-      ot:          "menu_ot",
+      daywork:       "menu_day",
+      ot:            "menu_ot",
       "salary-slip": "menu_salary",
-      "ot-slip":   "menu_ot_slip"
+      "ot-slip":     "menu_ot_slip"
     };
-    const langKey = titleMap[page] || "choose_month";
-    document.getElementById("menuTitle").innerHTML =
-      `<span>${document.getElementById("pageTitle").textContent}</span> — ` +
-      `<span style="color:var(--red)">${t(langKey)}</span>`;
+    const safePage = titleMap[page] ? page : null;
+    if (!safePage) {
+      window.location.replace("/web/index.html");
+    } else {
+      const langKey = titleMap[safePage];
+      document.getElementById("menuTitle").innerHTML =
+        `<span>${document.getElementById("pageTitle").textContent}</span> — ` +
+        `<span style="color:var(--red)">${t(langKey)}</span>`;
+    }
 
     function goNext() {
-      const month = document.getElementById("month").value;
-      const year  = document.getElementById("year").value;
-      window.location.href = `/web/${page}.html?month=${month}&year=${year}`;
+      if (!safePage) return;
+      const month = monthEl.value;
+      const year  = yearEl.value;
+      window.location.href = `/web/${safePage}.html?month=${month}&year=${year}`;
     }
   </script>
 </body>

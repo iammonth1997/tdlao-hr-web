@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TDLAO — Admin Seed Tool</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; color: #fff; }
+    .subtitle { font-size: 13px; color: #8b949e; margin-bottom: 32px; }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      max-width: 900px;
+    }
+    .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #58a6ff; }
+    label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e6edf3;
+      font-size: 14px;
+      margin-bottom: 14px;
+      outline: none;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      border-color: #58a6ff;
+    }
+    .file-drop {
+      border: 2px dashed #30363d;
+      border-radius: 10px;
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-bottom: 16px;
+    }
+    .file-drop:hover, .file-drop.drag { border-color: #58a6ff; background: rgba(88,166,255,0.05); }
+    .file-drop p { color: #8b949e; font-size: 14px; }
+    .file-drop strong { color: #58a6ff; }
+    input[type="file"] { display: none; }
+    .btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn-primary { background: #238636; color: #fff; }
+    .btn-primary:hover { background: #2ea043; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
+    .btn-secondary:hover { background: #30363d; }
+    .stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .stat {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px 20px;
+      text-align: center;
+      min-width: 100px;
+    }
+    .stat .num { font-size: 24px; font-weight: 700; color: #58a6ff; }
+    .stat .lbl { font-size: 12px; color: #8b949e; margin-top: 2px; }
+    .stat.green .num { color: #3fb950; }
+    .stat.red .num { color: #f85149; }
+    .stat.yellow .num { color: #d29922; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+    th {
+      background: #21262d;
+      color: #8b949e;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 1px solid #30363d;
+    }
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #21262d;
+      color: #e6edf3;
+    }
+    tr:hover td { background: rgba(255,255,255,0.03); }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-ok { background: rgba(63,185,80,0.15); color: #3fb950; }
+    .badge-skip { background: rgba(210,153,34,0.15); color: #d29922; }
+    .badge-err { background: rgba(248,81,73,0.15); color: #f85149; }
+    .progress-wrap {
+      background: #21262d;
+      border-radius: 8px;
+      height: 12px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #238636;
+      border-radius: 8px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+    .log {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+      font-family: monospace;
+      max-height: 200px;
+      overflow-y: auto;
+      color: #8b949e;
+    }
+    .log .ok { color: #3fb950; }
+    .log .err { color: #f85149; }
+    .log .info { color: #58a6ff; }
+    .warn-box {
+      background: rgba(210,153,34,0.1);
+      border: 1px solid rgba(210,153,34,0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #d29922;
+      margin-bottom: 16px;
+    }
+    .table-wrap { max-height: 360px; overflow-y: auto; border-radius: 8px; border: 1px solid #30363d; }
+    .row-gap { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+
+<h1>TDLAO — Admin Seed Tool</h1>
+<p class="subtitle">Seed employee PINs in bulk from CSV. Use locally only — never host publicly.</p>
+
+<!-- Step 1: Config -->
+<div class="card">
+  <h2>Step 1 — Worker Config</h2>
+  <label>Worker URL</label>
+  <input type="text" id="workerUrl" value="https://login-supabase-api.iammonth1997.workers.dev" />
+  <label>Seed Admin Key</label>
+  <input type="password" id="seedKey" placeholder="seedAdmin#2026" />
+</div>
+
+<!-- Step 2: CSV -->
+<div class="card">
+  <h2>Step 2 — Upload CSV</h2>
+  <div class="warn-box">
+    CSV ต้องมีคอลัมน์: <strong>emp_id</strong>, <strong>phone</strong>, <strong>status</strong><br>
+    PIN เริ่มต้น = เลขท้ายโทรศัพท์ 6 หลัก (ตัวเลขเท่านั้น)<br>
+    พนักงานที่ <strong>status = "ลาออก"</strong> หรือมี <strong>resign_date</strong> จะถูกข้าม
+  </div>
+  <div class="file-drop" id="fileDrop" onclick="document.getElementById('csvFile').click()">
+    <p>คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
+    <p style="margin-top:8px"><strong>employees_rows.csv</strong></p>
+    <input type="file" id="csvFile" accept=".csv" onchange="handleFile(this.files[0])" />
+  </div>
+  <div id="previewSection" style="display:none">
+    <div class="stats" id="statsBox"></div>
+    <div class="row-gap" style="margin-bottom:12px">
+      <button class="btn btn-secondary" onclick="togglePreview()">แสดง/ซ่อน Preview</button>
+    </div>
+    <div id="previewTable" style="display:none">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>emp_id</th><th>Phone</th><th>PIN</th><th>สถานะ</th></tr></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 3: Seed -->
+<div class="card" id="seedCard" style="display:none">
+  <h2>Step 3 — Seed พนักงาน</h2>
+  <div class="row-gap" style="margin-bottom:16px">
+    <button class="btn btn-primary" id="seedBtn" onclick="startSeed()">Seed ทั้งหมด</button>
+    <span id="seedStatus" style="font-size:13px;color:#8b949e"></span>
+  </div>
+  <div class="progress-wrap" id="progressWrap" style="display:none">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <div class="log" id="logBox" style="display:none"></div>
+  <div class="stats" id="resultStats" style="margin-top:16px"></div>
+</div>
+
+<script>
+  let parsedRecords = [];
+
+  // Drag and drop
+  const drop = document.getElementById("fileDrop");
+  drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("drag"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("drag"));
+  drop.addEventListener("drop", e => {
+    e.preventDefault();
+    drop.classList.remove("drag");
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  function handleFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => parseCSV(e.target.result);
+    reader.readAsText(file, "UTF-8");
+    drop.querySelector("p").textContent = `📄 ${file.name}`;
+  }
+
+  function parseCSV(text) {
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) return alert("CSV ว่างเปล่าหรือไม่มีข้อมูล");
+
+    const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+    const idxEmp = headers.indexOf("emp_id");
+    const idxPhone = headers.indexOf("phone");
+    const idxStatus = headers.indexOf("status");
+    const idxResign = headers.indexOf("resign_date");
+
+    if (idxEmp === -1) return alert("ไม่พบคอลัมน์ emp_id");
+    if (idxPhone === -1) return alert("ไม่พบคอลัมน์ phone");
+
+    parsedRecords = [];
+    let skipped = 0, noPhone = 0;
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i]);
+      const empId = (cols[idxEmp] || "").trim().toUpperCase();
+      if (!empId) continue;
+
+      const status = idxStatus >= 0 ? (cols[idxStatus] || "").trim() : "";
+      const resign = idxResign >= 0 ? (cols[idxResign] || "").trim() : "";
+
+      if (status === "ลาออก" || resign) {
+        skipped++;
+        continue;
+      }
+
+      const rawPhone = (cols[idxPhone] || "").trim();
+      const digits = rawPhone.replace(/\D/g, "");
+      const pin = digits.length >= 6 ? digits.slice(-6) : null;
+
+      if (!pin) {
+        noPhone++;
+        parsedRecords.push({ empId, rawPhone, pin: null, skip: true, reason: "ไม่มีเบอร์โทร" });
+        continue;
+      }
+
+      parsedRecords.push({ empId, rawPhone, pin, skip: false });
+    }
+
+    renderPreview(skipped, noPhone);
+  }
+
+  function parseCSVLine(line) {
+    const result = [];
+    let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === "," && !inQ) { result.push(cur); cur = ""; }
+      else { cur += c; }
+    }
+    result.push(cur);
+    return result;
+  }
+
+  function renderPreview(skipped, noPhone) {
+    const active = parsedRecords.filter(r => !r.skip);
+    const noPhoneList = parsedRecords.filter(r => r.skip);
+
+    document.getElementById("statsBox").innerHTML = `
+      <div class="stat green"><div class="num">${active.length}</div><div class="lbl">จะ Seed</div></div>
+      <div class="stat yellow"><div class="num">${skipped}</div><div class="lbl">ลาออก (ข้าม)</div></div>
+      <div class="stat red"><div class="num">${noPhoneList.length}</div><div class="lbl">ไม่มีเบอร์ (ข้าม)</div></div>
+      <div class="stat"><div class="num">${active.length + skipped + noPhoneList.length}</div><div class="lbl">ทั้งหมด</div></div>
+    `;
+
+    const tbody = document.getElementById("previewBody");
+    tbody.innerHTML = "";
+    parsedRecords.forEach((r, i) => {
+      const badge = r.skip
+        ? `<span class="badge badge-skip">ข้าม — ${r.reason || "ลาออก"}</span>`
+        : `<span class="badge badge-ok">✓ ${r.pin}</span>`;
+      tbody.innerHTML += `<tr>
+        <td>${i + 1}</td>
+        <td>${r.empId}</td>
+        <td>${r.rawPhone || "-"}</td>
+        <td><code>${r.pin || "-"}</code></td>
+        <td>${badge}</td>
+      </tr>`;
+    });
+
+    document.getElementById("previewSection").style.display = "block";
+    document.getElementById("seedCard").style.display = active.length > 0 ? "block" : "none";
+  }
+
+  function togglePreview() {
+    const el = document.getElementById("previewTable");
+    el.style.display = el.style.display === "none" ? "block" : "none";
+  }
+
+  async function startSeed() {
+    const workerUrl = document.getElementById("workerUrl").value.trim().replace(/\/$/, "");
+    const seedKey = document.getElementById("seedKey").value.trim();
+    if (!workerUrl) return alert("ใส่ Worker URL ก่อน");
+    if (!seedKey) return alert("ใส่ Seed Admin Key ก่อน");
+
+    const toSeed = parsedRecords.filter(r => !r.skip);
+    if (toSeed.length === 0) return alert("ไม่มีรายการที่จะ seed");
+
+    const btn = document.getElementById("seedBtn");
+    btn.disabled = true;
+
+    const logBox = document.getElementById("logBox");
+    const progressBar = document.getElementById("progressBar");
+    logBox.style.display = "block";
+    document.getElementById("progressWrap").style.display = "block";
+    logBox.innerHTML = "";
+
+    const BATCH = 500;
+    const batches = [];
+    for (let i = 0; i < toSeed.length; i += BATCH) {
+      batches.push(toSeed.slice(i, i + BATCH));
+    }
+
+    let totalOk = 0, totalFailed = 0;
+    const failedList = [];
+
+    for (let b = 0; b < batches.length; b++) {
+      const batch = batches[b];
+      const from = b * BATCH + 1;
+      const to = from + batch.length - 1;
+      appendLog(`info`, `Batch ${b + 1}/${batches.length} — รายการที่ ${from}-${to} ...`);
+
+      try {
+        const body = { records: batch.map(r => ({ emp_id: r.empId, pin: r.pin })) };
+        const res = await fetch(`${workerUrl}/?action=seed`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-seed-key": seedKey },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+
+        totalOk += data.ok || 0;
+        totalFailed += data.failed || 0;
+        if (data.errors && data.errors.length) {
+          data.errors.forEach(e => failedList.push(e));
+          appendLog("err", `  ✗ failed: ${data.failed} — ${data.errors.map(e => e.emp_id + ": " + e.error).join(", ")}`);
+        } else {
+          appendLog("ok", `  ✓ ok: ${data.ok}, failed: ${data.failed}`);
+        }
+      } catch (err) {
+        appendLog("err", `  ✗ Network error: ${err.message}`);
+        totalFailed += batch.length;
+      }
+
+      const pct = Math.round(((b + 1) / batches.length) * 100);
+      progressBar.style.width = pct + "%";
+      document.getElementById("seedStatus").textContent = `${pct}% — ${from + batch.length - 1}/${toSeed.length} รายการ`;
+
+      if (b < batches.length - 1) await sleep(300);
+    }
+
+    appendLog(totalFailed === 0 ? "ok" : "err",
+      `\nเสร็จสิ้น — สำเร็จ: ${totalOk}, ล้มเหลว: ${totalFailed}`);
+
+    document.getElementById("resultStats").innerHTML = `
+      <div class="stat green"><div class="num">${totalOk}</div><div class="lbl">Seed สำเร็จ</div></div>
+      <div class="stat red"><div class="num">${totalFailed}</div><div class="lbl">ล้มเหลว</div></div>
+    `;
+
+    btn.disabled = false;
+    btn.textContent = "Seed อีกครั้ง";
+  }
+
+  function appendLog(type, text) {
+    const logBox = document.getElementById("logBox");
+    const line = document.createElement("div");
+    line.className = type;
+    line.textContent = text;
+    logBox.appendChild(line);
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>

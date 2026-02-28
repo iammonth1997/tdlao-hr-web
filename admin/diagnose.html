@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TDLAO HR - Diagnosis Tool</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: monospace;
+      background: #1a1a1a;
+      color: #fff;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { color: #ff6b6b; margin-bottom: 20px; }
+    .test { 
+      margin-bottom: 20px; 
+      border: 1px solid #444;
+      padding: 15px;
+      border-radius: 5px;
+      background: #222;
+    }
+    .test h3 { color: #4ecdc4; margin-bottom: 10px; }
+    .test button {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      font-family: monospace;
+    }
+    .test button:hover { background: #ff5252; }
+    .output {
+      background: #111;
+      border: 1px solid #333;
+      padding: 10px;
+      margin-top: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .success { color: #51cf66; }
+    .error { color: #ff6b6b; }
+    .info { color: #74c0fc; }
+    .warning { color: #ffd43b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>TDLAO HR - Database Diagnosis</h1>
+    <p style="margin-bottom: 20px; color: #aaa;">Testing Supabase connection and table structure</p>
+
+    <div class="test">
+      <h3>1. Check Supabase Connection</h3>
+      <button onclick="testConnection()">Test Connection</button>
+      <div id="connectionOutput" class="output"></div>
+    </div>
+
+    <div class="test">
+      <h3>2. Get Employees Table Schema</h3>
+      <button onclick="getEmployeesSchema()">Get Schema</button>
+      <div id="schemaOutput" class="output"></div>
+    </div>
+
+    <div class="test">
+      <h3>3. Check Specific Employee</h3>
+      <input type="text" id="empIdInput" placeholder="Enter emp_id (e.g., L2506110)" style="padding: 8px; width: 200px; margin-right: 10px;">
+      <button onclick="checkEmployee()">Check Employee</button>
+      <div id="checkOutput" class="output"></div>
+    </div>
+
+    <div class="test">
+      <h3>4. List All Employees (first 10)</h3>
+      <button onclick="listEmployees()">List Employees</button>
+      <div id="listOutput" class="output"></div>
+    </div>
+
+    <div class="test">
+      <h3>5. Test Worker API Check Endpoint</h3>
+      <input type="text" id="workerEmpId" placeholder="Enter emp_id" style="padding: 8px; width: 200px; margin-right: 10px;">
+      <button onclick="testWorkerCheck()">Test Worker API</button>
+      <div id="workerOutput" class="output"></div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://hokthzztcijvgnvcgkms.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_SnfPbihz94Zt2aOYDA91hw_1cCGTXDF";
+    const WORKER_API = "https://login-supabase-api.iammonth1997.workers.dev/";
+
+    function log(elementId, message, className = "info") {
+      const output = document.getElementById(elementId);
+      const line = document.createElement("div");
+      line.className = className;
+      line.textContent = message;
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function clear(elementId) {
+      document.getElementById(elementId).innerHTML = "";
+    }
+
+    async function testConnection() {
+      clear("connectionOutput");
+      log("connectionOutput", "Testing connection to Supabase...", "info");
+      
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        
+        if (response.ok) {
+          log("connectionOutput", "✓ Supabase connection successful!", "success");
+        } else {
+          log("connectionOutput", `✗ Supabase returned status ${response.status}`, "error");
+        }
+      } catch (e) {
+        log("connectionOutput", `✗ Connection error: ${e.message}`, "error");
+      }
+    }
+
+    async function getEmployeesSchema() {
+      clear("schemaOutput");
+      log("schemaOutput", "Fetching employees table schema...", "info");
+      
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/employees?limit=0`, {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        
+        if (!response.ok) {
+          log("schemaOutput", `✗ Error ${response.status}: ${await response.text()}`, "error");
+          return;
+        }
+
+        const headers = response.headers;
+        log("schemaOutput", "Response headers:", "info");
+        log("schemaOutput", `Content-Range: ${headers.get("content-range")}`, "info");
+        
+        // Try to get column info from the response
+        const data = await response.json();
+        log("schemaOutput", `✓ Employees table exists`, "success");
+        log("schemaOutput", `Response data: ${JSON.stringify(data)}`, "info");
+      } catch (e) {
+        log("schemaOutput", `✗ Error: ${e.message}`, "error");
+      }
+    }
+
+    async function checkEmployee() {
+      clear("checkOutput");
+      const empId = document.getElementById("empIdInput").value.trim().toUpperCase();
+      
+      if (!empId) {
+        log("checkOutput", "Please enter an emp_id", "warning");
+        return;
+      }
+
+      log("checkOutput", `Checking for emp_id: ${empId}`, "info");
+      
+      try {
+        const query = new URLSearchParams({
+          select: "emp_id,status,dob",
+          emp_id: `eq.${empId}`
+        });
+        
+        const url = `${SUPABASE_URL}/rest/v1/employees?${query.toString()}`;
+        log("checkOutput", `Query URL: ${url}`, "info");
+        
+        const response = await fetch(url, {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          if (Array.isArray(data) && data.length > 0) {
+            log("checkOutput", `✓ Found: ${JSON.stringify(data[0])}`, "success");
+          } else {
+            log("checkOutput", `✗ No results. Response: ${JSON.stringify(data)}`, "warning");
+          }
+        } else {
+          log("checkOutput", `✗ Error ${response.status}: ${JSON.stringify(data)}`, "error");
+        }
+      } catch (e) {
+        log("checkOutput", `✗ Error: ${e.message}`, "error");
+      }
+    }
+
+    async function listEmployees() {
+      clear("listOutput");
+      log("listOutput", "Fetching first 10 employees...", "info");
+      
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/employees?limit=10`, {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+
+        const data = await response.json();
+        
+        if (response.ok && Array.isArray(data)) {
+          if (data.length === 0) {
+            log("listOutput", "✗ No employees found in table", "warning");
+          } else {
+            log("listOutput", `✓ Found ${data.length} employee(s):`, "success");
+            data.forEach((emp, idx) => {
+              log("listOutput", `${idx + 1}. ${JSON.stringify(emp)}`, "info");
+            });
+          }
+        } else {
+          log("listOutput", `✗ Error: ${JSON.stringify(data)}`, "error");
+        }
+      } catch (e) {
+        log("listOutput", `✗ Error: ${e.message}`, "error");
+      }
+    }
+
+    async function testWorkerCheck() {
+      clear("workerOutput");
+      const empId = document.getElementById("workerEmpId").value.trim().toUpperCase();
+      
+      if (!empId) {
+        log("workerOutput", "Please enter an emp_id", "warning");
+        return;
+      }
+
+      log("workerOutput", `Testing Worker API check for: ${empId}`, "info");
+      
+      try {
+        const response = await fetch(`${WORKER_API}?action=check`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ emp_id: empId })
+        });
+
+        const data = await response.json();
+        log("workerOutput", `Response: ${JSON.stringify(data, null, 2)}`, "info");
+        
+        if (data.exists) {
+          log("workerOutput", `✓ Employee found!`, "success");
+        } else {
+          log("workerOutput", `✗ Employee not found`, "warning");
+        }
+      } catch (e) {
+        log("workerOutput", `✗ Error: ${e.message}`, "error");
+      }
+    }
+
+    // Auto-test on load
+    window.addEventListener("load", () => {
+      testConnection();
+    });
+  </script>
+</body>
+</html>

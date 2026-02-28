@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/ADVICE/Downloads/**)",
+      "Bash(python3 -c \":*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\ADVICE\\.claude\\projects\\d--Project-Web-App-tdlao-hr-web"
+    ]
+  }
+}

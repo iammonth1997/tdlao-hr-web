@@ -1,10 +1,10 @@
 /**
  * Cloudflare Worker Auth API
- * Actions: register, login, seed, verify
- * Auth model: emp_id + PIN + device binding (no email)
+ * Actions: check, register, login, seed, verify
+ * Auth model: emp_id + DOB verification + self-set PIN + device binding
  */
 
-const PIN_ITERATIONS = 210000;
+const PIN_ITERATIONS = 100000;
 const PIN_KEY_BYTES = 32;
 const SESSION_TTL_SECONDS = 8 * 60 * 60;
 const GENERIC_LOGIN_ERROR = "Invalid Employee ID or PIN";
@@ -24,6 +24,9 @@ export default {
 
       if (!action) return json({ error: "Missing action" }, 400, corsHeaders);
 
+      if (action === "check") {
+        return await handleCheck(request, env, payload, corsHeaders);
+      }
       if (action === "register") {
         return await handleRegister(request, env, payload, corsHeaders);
       }
@@ -324,15 +327,17 @@ async function verifyJwt(token, secret) {
   return { ok: true, payload };
 }
 
-async function getEmployeeExists(env, empId) {
+async function getEmployee(env, empId) {
   const query = new URLSearchParams({
-    select: "emp_id",
+    select: "emp_id,status,dob",
     emp_id: `eq.${empId}`,
     limit: "1"
   });
   const rows = await supabaseRequest(env, "employees", { method: "GET", query });
-  return Array.isArray(rows) && rows.length > 0;
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  return rows[0];
 }
+
 
 async function getLoginUser(env, empId) {
   const query = new URLSearchParams({
@@ -382,38 +387,65 @@ async function persistSessionIfEnabled(env, session) {
   }
 }
 
+async function handleCheck(request, env, payload, corsHeaders) {
+  const empId = normalizeEmpId(payload.emp_id || payload.emp);
+  if (!isValidEmpId(empId)) return json({ error: "Invalid emp_id" }, 400, corsHeaders);
+
+  const ip = readClientIp(request);
+  const limited = await rateLimitKV(env, `check:${ip}`, 30, 300);
+  if (limited) return json({ error: "Too many requests" }, 429, corsHeaders);
+
+  const employee = await getEmployee(env, empId);
+  if (!employee) return json({ exists: false }, 200, corsHeaders);
+
+  const active = employee.status !== "ลาออก";
+
+  let registered = false;
+  try {
+    const user = await getLoginUser(env, empId);
+    registered = !!(user && user.pin_hash);
+  } catch {}
+
+  return json({ exists: true, active, registered }, 200, corsHeaders);
+}
+
 async function handleRegister(request, env, payload, corsHeaders) {
   const empId = normalizeEmpId(payload.emp_id || payload.emp);
   const pin = normalizePin(payload.pin);
   const deviceId = normalizeDeviceId(payload.device_id);
+  const dob = String(payload.dob || "").trim(); // expected: YYYY-MM-DD
 
   if (!isValidEmpId(empId)) return json({ error: "Invalid emp_id" }, 400, corsHeaders);
   if (!isValidPin(pin)) return json({ error: "PIN must be 6 digits" }, 400, corsHeaders);
   if (!isValidDeviceId(deviceId)) return json({ error: "Invalid device_id" }, 400, corsHeaders);
+  if (!dob) return json({ error: "Date of birth required" }, 400, corsHeaders);
 
   const ip = readClientIp(request);
   const limited = await rateLimitKV(env, `register:${ip}`, 20, 300);
   if (limited) return json({ error: "Too many requests" }, 429, corsHeaders);
 
-  const employeeExists = await getEmployeeExists(env, empId);
-  if (!employeeExists) return json({ error: "Employee not found" }, 404, corsHeaders);
+  const employee = await getEmployee(env, empId);
+  if (!employee) return json({ error: "Employee not found" }, 404, corsHeaders);
+
+  if (employee.status === "ลาออก") {
+    return json({ error: "Account suspended", code: "RESIGNED" }, 403, corsHeaders);
+  }
+
+  // Verify date of birth
+  const empDob = String(employee.dob || "").trim().slice(0, 10);
+  if (!empDob || empDob !== dob) {
+    await sleep(300);
+    return json({ error: "Date of birth does not match", code: "DOB_MISMATCH" }, 401, corsHeaders);
+  }
+
+  // Block if already registered (must use login)
+  const existing = await getLoginUser(env, empId);
+  if (existing && existing.pin_hash) {
+    return json({ error: "Already registered. Please login.", code: "ALREADY_REGISTERED" }, 409, corsHeaders);
+  }
 
   const pinHash = await hashPin(pin, env.PIN_PEPPER);
   const deviceHash = await hashDeviceBinding(empId, deviceId, env.PIN_PEPPER);
-
-  let existing = null;
-  try {
-    existing = await getLoginUser(env, empId);
-  } catch (err) {
-    console.warn("register existing-check skipped:", err.message || err);
-  }
-
-  const forceRebind = payload.force_rebind === true || payload.force_rebind === "1";
-  const rebindKey = String(payload.rebind_key || "");
-  const canForceRebind = forceRebind && rebindKey && env.DEVICE_REBIND_KEY && rebindKey === env.DEVICE_REBIND_KEY;
-  if (existing && existing.device_id_hash && existing.device_id_hash !== deviceHash && !canForceRebind) {
-    return json({ error: "Device already bound", code: "DEVICE_ALREADY_BOUND" }, 409, corsHeaders);
-  }
 
   await upsertLoginUser(env, {
     emp_id: empId,
@@ -421,7 +453,18 @@ async function handleRegister(request, env, payload, corsHeaders) {
     device_id_hash: deviceHash
   });
 
-  return json({ ok: true, emp_id: empId, device_bound: true }, 200, corsHeaders);
+  // Auto-login after successful registration
+  const now = Math.floor(Date.now() / 1000);
+  const exp = now + SESSION_TTL_SECONDS;
+  const payloadJwt = { sub: empId, did: deviceHash, iat: now, exp, jti: crypto.randomUUID() };
+  const token = await signJwt(payloadJwt, env.JWT_SECRET);
+
+  await persistSessionIfEnabled(env, {
+    token, emp_id: empId, device_id_hash: deviceHash,
+    expires_at: new Date(exp * 1000).toISOString()
+  });
+
+  return json({ ok: true, token, token_type: "Bearer", expires_in: SESSION_TTL_SECONDS, emp_id: empId }, 200, corsHeaders);
 }
 
 async function handleLogin(request, env, payload, corsHeaders) {
@@ -439,6 +482,19 @@ async function handleLogin(request, env, payload, corsHeaders) {
   const empLimited = await rateLimitKV(env, `login-emp:${empId}`, 8, 300);
   if (ipLimited || empLimited) {
     return json({ error: "Too many login attempts" }, 429, corsHeaders);
+  }
+
+  // Block resigned employees
+  let employee = null;
+  try {
+    employee = await getEmployee(env, empId);
+  } catch (err) {
+    console.error("login employee lookup error:", err);
+    return json({ error: "Auth service unavailable" }, 503, corsHeaders);
+  }
+  if (!employee || employee.status === "ลาออก") {
+    await sleep(300);
+    return json({ error: GENERIC_LOGIN_ERROR }, 401, corsHeaders);
   }
 
   let user = null;
