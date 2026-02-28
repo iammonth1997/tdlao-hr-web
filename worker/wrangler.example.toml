@@ -1,0 +1,21 @@
+name = "tdlao-auth-worker"
+main = "worker.js"
+compatibility_date = "2026-02-28"
+
+[vars]
+SUPABASE_URL = "https://your-project.supabase.co"
+CORS_ORIGIN = "https://your-frontend-domain.example"
+STORE_LOGIN_SESSIONS = "1"
+
+# Optional KV rate limit binding
+# [[kv_namespaces]]
+# binding = "AUTH_RATE_LIMIT_KV"
+# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Secrets (set with `wrangler secret put ...`):
+# - SUPABASE_SERVICE_ROLE_KEY
+# - PIN_PEPPER
+# - JWT_SECRET
+# - SEED_ADMIN_KEY
+# - DEVICE_REBIND_KEY
+# - SESSION_TOKEN_PEPPER
